@@ -108,7 +108,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
   }
 
-  void _saveForm(){
+  Future<void>_saveForm() async{
    final isValidate = _form.currentState.validate(); //manual validation using global key
    if(! isValidate){
      return; //if not valid then this will simply retun and this function execution will stop and form wont save
@@ -130,13 +130,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
     } 
     //add if dont exist
     else{ 
-       //here we called product provider listner and to that we call a method inside that provider class which add products to list of products and passed _edited products to send info about new product user inputs
-       Provider.of<Products>(context,listen: false)
-       .addProducts(_editedProduct)
-       .catchError((error){ //to catch error if any thrown by this addProducts method where it exist
-
-         return showDialog<Null>(
-            context: context,
+       try{
+         //here we called product provider listner and to that we call a method inside that provider class which add products to list of products and passed _edited products to send info about new product user inputs
+         await Provider.of<Products>(context,listen: false).addProducts(_editedProduct);
+         
+       }catch(err){
+           await showDialog<Null>( //added await here to wait for the user to close this dialog then proceed for finally if erro happen 
+            context: context, 
             builder: (ctx)=> Container(
               child: AlertDialog(
                 title: Text("An error Occurred"),
@@ -159,16 +159,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
               ),
             )
             );
+       }
 
-       }).then((_) {
-         setState(() {
+       finally{ //this runs no matter we run into an error or everything runs smoothly
+          setState(() {
            _isLoading = false;
           });
           Navigator.of(context).pop();
-         }
-       );
-    } 
-    
+       }        
+    }  
   }
 
   @override
