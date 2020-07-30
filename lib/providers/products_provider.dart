@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert'; //to convert data into json
 import 'package:http/http.dart' as http;
+import '../model/http_exceptions.dart';
 import 'package:shop_app/secrets.dart';
 import './product.dart';
 
@@ -17,38 +18,38 @@ class Products with ChangeNotifier {
   final secret = Secrets();
 
     List<Product> _items = [
-    Product(
-      id: 'p1',
-      title: 'Red Shirt',
-      description: 'A red shirt - it is pretty red!',
-      price: 29.99,
-      imageUrl:
-          'https://cdn.pixabay.com/photo/2016/10/02/22/17/red-t-shirt-1710578_1280.jpg',
-    ),
-    Product(
-      id: 'p2',
-      title: 'Trousers',
-      description: 'A nice pair of trousers.',
-      price: 59.99,
-      imageUrl:
-          'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Trousers%2C_dress_%28AM_1960.022-8%29.jpg/512px-Trousers%2C_dress_%28AM_1960.022-8%29.jpg',
-    ),
-    Product(
-      id: 'p3',
-      title: 'Yellow Scarf',
-      description: 'Warm and cozy - exactly what you need for the winter.',
-      price: 19.99,
-      imageUrl:
-          'https://live.staticflickr.com/4043/4438260868_cc79b3369d_z.jpg',
-    ),
-    Product(
-      id: 'p4',
-      title: 'A Pan',
-      description: 'Prepare any meal you want.',
-      price: 49.99,
-      imageUrl:
-          'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
-    ),
+    // Product(
+    //   id: 'p1',
+    //   title: 'Red Shirt',
+    //   description: 'A red shirt - it is pretty red!',
+    //   price: 29.99,
+    //   imageUrl:
+    //       'https://cdn.pixabay.com/photo/2016/10/02/22/17/red-t-shirt-1710578_1280.jpg',
+    // ),
+    // Product(
+    //   id: 'p2',
+    //   title: 'Trousers',
+    //   description: 'A nice pair of trousers.',
+    //   price: 59.99,
+    //   imageUrl:
+    //       'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Trousers%2C_dress_%28AM_1960.022-8%29.jpg/512px-Trousers%2C_dress_%28AM_1960.022-8%29.jpg',
+    // ),
+    // Product(
+    //   id: 'p3',
+    //   title: 'Yellow Scarf',
+    //   description: 'Warm and cozy - exactly what you need for the winter.',
+    //   price: 19.99,
+    //   imageUrl:
+    //       'https://live.staticflickr.com/4043/4438260868_cc79b3369d_z.jpg',
+    // ),
+    // Product(
+    //   id: 'p4',
+    //   title: 'A Pan',
+    //   description: 'Prepare any meal you want.',
+    //   price: 49.99,
+    //   imageUrl:
+    //       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
+    // ),
   ];
 
     //getter which will return all the products
@@ -67,6 +68,34 @@ class Products with ChangeNotifier {
     Product findById(String id){
       return _items.firstWhere((prod) => prod.id == id );
     }
+
+    //method to fetch product to be render on our product overview screen
+    Future<void>fetchAndSetProducts() async {
+      final url ="${secret.fireBaseUrl}/products.json";
+      try{
+        final response = await http.get(url); //http get method
+        final extractedData = json.decode(response.body) as Map<String,dynamic>; //store the response we get as a map
+        final List<Product>loadedProduct = []; //created an empty list which will be assigned to our _items so item list will update and everyone listening to it get data we get from our server
+       
+        extractedData.forEach((prodId, prodData) {
+          loadedProduct.add(Product(
+            id: prodId,
+            title: prodData['title'],
+            description: prodData['description'],
+            price: prodData['price'],
+            imageUrl: prodData['imageUrl'],
+            isFavourite: prodData['isisFavourite'],
+          ));
+         });
+          _items = loadedProduct; //assign our dummy list to ur main list of products
+          notifyListeners(); //notify the listener about the change
+      
+      }catch(err){
+        throw(err);
+      }
+      
+    }
+
 
     //method to add new products
     Future<void>addProducts(Product product) async { //async methods automatically returns a future
@@ -125,20 +154,78 @@ class Products with ChangeNotifier {
     }
 
     //method used to update our product
-    void updateProduct(String id, Product newProduct){
+    Future<void> updateProduct(String id, Product newProduct) async{
       final prodIndex= _items.indexWhere((prod) => prod.id == id );
       if(prodIndex >= 0){
+
+        //-------------------------update the product in database-----------------------------//
+
+        final url ="${secret.fireBaseUrl}/products/$id.json"; //modified url with id of product
+                                                              //store in database to update it
+                                                              //ps product id locally and online is same
+        
+        await http.patch(url,body: json.encode({
+          'title':newProduct.title,
+          'description':newProduct.description,
+          'imageUrl':newProduct.imageUrl,
+          'price':newProduct.price
+        }));
+
+        //-------------------------update the product in database-----------------------------//
+         
+        //---------------=------------update the product locally------------------------------//
           _items[prodIndex] = newProduct;
           notifyListeners();
+
+        //---------------=------------update the product locally------------------------------//
       }
       else{
         print("...");
       }
     }
 
-    void deleteProduct(String id){
-      _items.removeWhere((prod) => prod.id == id );
+    Future<void> deleteProduct(String id) async {
+
+      //----------------------deleting product from database----------------------------------//
+
+      final url ="${secret.fireBaseUrl}/products/$id.json";
+
+      //store the index of the product we are trying to delete
+      final existingProductIndex = _items.indexWhere((prod) => prod.id == id);
+      //store the the product we want to delete in a variable to store it in memory
+      var existingProducts = _items[existingProductIndex];
+
+
+      //-----------------------------deleting product locally---------------------------------//
+
+      _items.removeAt(existingProductIndex); 
       notifyListeners();
+
+      //-----------------------------deleting product locally---------------------------------//
+
+      //----------optimistic updating to rollback if any erro occur during deletion-----------// 
+
+      final response =await http.delete(url);
+      
+        print(response.statusCode);
+        if( response.statusCode >=400 ){
+
+            //if error occurs us this rollback deletion
+           _items.insert(existingProductIndex, existingProducts);
+            notifyListeners();
+
+            throw HttpExceptions("Could not delete Product."); //throw our custom exception which will be catched by catchError
+        
+        }else{
+
+             existingProducts = null ; // if delete is successful then remove the product from memory too
+        }
+         
+      //----------optimistic updating to rollback if any erro occur during deletion-----------//
+
+      //----------------------deleting product from database----------------------------------//
+
+      
     }
 
 }

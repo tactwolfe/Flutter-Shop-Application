@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shop_app/providers/products_provider.dart';
 import './product_item.dart';
 import '../providers/products_provider.dart';
 
@@ -20,23 +19,20 @@ class ProductsGrid extends StatelessWidget {
     return GridView.builder(
 
       padding: const EdgeInsets.all(10.0),
+      itemCount: products.length,
 
-      itemBuilder: (ctx,index)=>ChangeNotifierProvider.value( //alternative changenotifierprovider syntax it can be used when we dont need any context
+      itemBuilder: (ctx,i)=>ChangeNotifierProvider.value( //alternative changenotifierprovider syntax it can be used when we dont need any context
         // create: (ctx)=> products[index],                   //this approach is correct to be used in listview and grid view with builder function to avoid error because they recycled widget
-        value: products[index],                               //used when we reuse existing object like here products that uses productData
+        value: products[i],                               //used when we reuse existing object like here products that uses productData
         child:ProductItem(
         // products[index].id, 
         // products[index].title, 
         // products[index].imageUrl
         ),
-        ),
-      
-
-      itemCount: products.length,
-
+      ),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2, // max no. of grid item allower per row
-        childAspectRatio: 3/2, //what will be the ratio of height and width of each  item
+        childAspectRatio: 3 / 2, //what will be the ratio of height and width of each  item
         crossAxisSpacing: 10,//distance between column  of the grid
         mainAxisSpacing: 10 //distance between rows of the grid
 

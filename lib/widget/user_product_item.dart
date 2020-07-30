@@ -15,6 +15,7 @@ class UserProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var scaffold = Scaffold.of(context); //because since we used it down there in an async method compliter dont give us a snackbar because the context might have been change when async method finish execution so to store a snapshot of initial context and to show a snackbar we use this variable and store scaffold.of(context) in here
     return ListTile(
       title: Text(title),
       leading: CircleAvatar(backgroundImage:NetworkImage(imageUrl), //here Network image is the image provider object not an widget
@@ -35,8 +36,20 @@ class UserProductItem extends StatelessWidget {
 
             IconButton(
               icon: Icon(Icons.delete,color: Theme.of(context).errorColor,), 
-              onPressed: (){
-                Provider.of<Products>(context,listen: false).deleteProduct(id);
+              onPressed: () async {
+                try{
+
+                   await Provider.of<Products>(context,listen: false).deleteProduct(id);
+                }
+                catch(err){
+                    scaffold.hideCurrentSnackBar();
+                    scaffold.showSnackBar(
+                      SnackBar(
+                        content: Text("Deleting Failed!!",textAlign: TextAlign.center,)
+                        )
+                      ); 
+                }
+                
               }
               ),
 

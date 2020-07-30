@@ -25,7 +25,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   var _editedProduct = Product( //global map that which is the object of product class which will be used to save value tha is inputted into the textformfield
     id: null,
     title: "",
-    price: 0.0,
+    price: 0,
     description: "",
     imageUrl: ""
     );
@@ -122,11 +122,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
     //update if exist
     if(_editedProduct.id !=null ){
-      Provider.of<Products>(context,listen: false).updateProduct(_editedProduct.id, _editedProduct);
-      setState(() {
-      _isLoading = false;
-      });
-       Navigator.of(context).pop();
+      await Provider.of<Products>(context,listen: false).updateProduct(_editedProduct.id, _editedProduct);
+      
     } 
     //add if dont exist
     else{ 
@@ -161,13 +158,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
             );
        }
 
-       finally{ //this runs no matter we run into an error or everything runs smoothly
-          setState(() {
-           _isLoading = false;
-          });
-          Navigator.of(context).pop();
-       }        
+      //  finally{ //this runs no matter we run into an error or everything runs smoothly
+      //     setState(() {
+      //      _isLoading = false;
+      //     });
+      //     Navigator.of(context).pop();
+      //  }        
     }  
+    setState(() {
+      _isLoading = false;
+      });
+       Navigator.of(context).pop();
   }
 
   @override

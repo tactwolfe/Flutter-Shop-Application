@@ -7,6 +7,7 @@ import '../widget/app_drawer.dart';
 import '../widget/products_grid.dart';
 import '../widget/badge.dart';
 import './cart_screen.dart';
+import '../providers/products_provider.dart';
 
 //the enums we are going to use as values for our PopupMenuItems
 enum FilterOptions { Favourites, All }
@@ -21,6 +22,27 @@ class ProductOverviewScreen extends StatefulWidget {
 class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
   var _showOnlyFavouriteData =
       false; //this bool is used to toggle our gridview of products to show all items or favourite items
+  var _isInit = true;
+  var _isLoading =false;
+
+  @override
+  void didChangeDependencies() {
+    if(_isInit){
+      setState(() {
+        _isLoading = true;
+      });
+      
+      Provider.of<Products>(context).fetchAndSetProducts().then((_) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+      });
+    }
+    _isInit = false;
+    super.didChangeDependencies();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +87,11 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
         ],
       ),
       drawer: AppDrawer() ,
-      body: ProductsGrid(
-          _showOnlyFavouriteData), //pass the value of  _showOnlyFavouriteData to product grid to toggle between favourite itesm and all items  we recieved this bool at productGrid as an argument to its constructor
+      body: _isLoading ?
+      Center(
+        child: CircularProgressIndicator(),
+        ) 
+      :ProductsGrid( _showOnlyFavouriteData), //pass the value of  _showOnlyFavouriteData to product grid to toggle between favourite itesm and all items  we recieved this bool at productGrid as an argument to its constructor
     );
   }
 }
