@@ -32,7 +32,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
   
   var _isInit = true; //a boolean we create to make sure that didChangedependency doesnt run everytime
   
-  var _initValue = {
+  var _isLoading = false;
+
+  var _initValue = { //to add initial values to our text Field
     'title':'',
     'description':'',
     'price':'',
@@ -113,18 +115,60 @@ class _EditProductScreenState extends State<EditProductScreen> {
    }
    _form.currentState.save(); //this will help to save/update the state of our form i.e the value entered into the textform field will be saved into global map and this will help to do so  
 
+    setState(() {
+      _isLoading = true;
+    });
+    
+
     //update if exist
     if(_editedProduct.id !=null ){
       Provider.of<Products>(context,listen: false).updateProduct(_editedProduct.id, _editedProduct);
+      setState(() {
+      _isLoading = false;
+      });
+       Navigator.of(context).pop();
     } 
     //add if dont exist
     else{ 
        //here we called product provider listner and to that we call a method inside that provider class which add products to list of products and passed _edited products to send info about new product user inputs
-       Provider.of<Products>(context,listen: false).addProducts(_editedProduct);
-    } 
+       Provider.of<Products>(context,listen: false)
+       .addProducts(_editedProduct)
+       .catchError((error){ //to catch error if any thrown by this addProducts method where it exist
 
+         return showDialog<Null>(
+            context: context,
+            builder: (ctx)=> Container(
+              child: AlertDialog(
+                title: Text("An error Occurred"),
+                content: Container(
+                  height: MediaQuery.of(context).size.height/4,
+                  child: Column(children: <Widget>[
+                      Text("Something Went Wrong!"),
+                      SizedBox(height: 10,),
+                      Image.asset("assets/images/error.png",height: 100,width: 100,)
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text("Okay"),
+                    onPressed: (){
+                    Navigator.of(ctx).pop();
+                   })
+                ],
+              ),
+            )
+            );
+
+       }).then((_) {
+         setState(() {
+           _isLoading = false;
+          });
+          Navigator.of(context).pop();
+         }
+       );
+    } 
     
-    Navigator.of(context).pop();
   }
 
   @override
@@ -138,7 +182,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
             onPressed: _saveForm )
         ],
       ),
-      body: Padding(
+      body:
+       _isLoading ? 
+       Center(
+         child: CircularProgressIndicator(),
+       )
+
+      :Padding(
         padding: const EdgeInsets.all(15.0),
         child: Form(
             key: _form,

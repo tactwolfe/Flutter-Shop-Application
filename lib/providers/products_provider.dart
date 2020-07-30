@@ -1,6 +1,9 @@
 //products provider class
 
 import 'package:flutter/material.dart';
+import 'dart:convert'; //to convert data into json
+import 'package:http/http.dart' as http;
+import 'package:shop_app/secrets.dart';
 import './product.dart';
 
 
@@ -10,6 +13,8 @@ import './product.dart';
 //of communication between this and widget that will required this provider directly through 
 //the widget of which he is child of and this provider is connected to using context object
 class Products with ChangeNotifier {
+
+  final secret = Secrets();
 
     List<Product> _items = [
     Product(
@@ -64,17 +69,55 @@ class Products with ChangeNotifier {
     }
 
     //method to add new products
-    void addProducts(Product product){
+    Future<void>addProducts(Product product){ //make the method return void to wait to pop the screen using this function this this finish its execution
 
-      final newProduct = Product(
-        title: product.title,
-        description: product.description,
+      //----------------------saving data to our online database--------------------------//
+
+      //url of our firebase application server where we are going to save the data
+      final url ="${secret.fireBaseUrl}/products.json";
+      
+      //post method to save the data recieve in our database we send the data as map because json.encode accept data that way
+      //note:this post method returns a future object thus we can use then method just after this
+      //method completes it execution
+      
+      //we return the entire thing because post and then returns a future which satisfiies our return type of this function also we can use this future to popuser product screen only after data is saved to database
+      return     
+      http.post(url,body: json.encode({
+          'title':product.title,
+          'description':product.description,
+          'imageUrl':product.imageUrl,
+          'price':product.price,
+          'isFavourite':product.isFavourite
+       })
+      )
+      //----------------------saving data to our online database--------------------------//
+      
+      //-----------------------saving data to our local memory----------------------------//
+
+      .then((response)  { //this then method of post recieves some response from the server that we are going to use to create our product id
+        
+        final newProduct = Product(        //move this enitre logic to add product to our local memory
+        title: product.title,              //so we can add id of the product base on info we get from 
+        description: product.description,  //response we get from the then method here
         price: product.price,
         imageUrl: product.imageUrl,
-        id:DateTime.now().toString()
+        id: json.decode(response.body)['name'] //this adds the cryptic value we get from
+                                               //response inside the key name to our 
+                                              //product id so we can easily find our data in online server
       );
       _items.add(newProduct);
       notifyListeners();
+      })
+      //-----------------------saving data to our local memory----------------------------//
+     
+      //---------------------------------error handling-----------------------------------//
+     .catchError((err) { 
+       print(err);
+       throw err; //to throw this error to another error handler listining to this function ps:the one in our saveForm function that is using this method and getting a future as returned by this function thus using that future in there it can catch the error thrown by this catchError function that also send this error as a future
+     });
+
+     //---------------------------------error handling-----------------------------------//
+
     }
 
     //method used to update our product
