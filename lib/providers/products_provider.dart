@@ -78,7 +78,8 @@ class Products with ChangeNotifier {
         final List<Product>loadedProduct = []; //created an empty list which will be assigned to our _items so item list will update and everyone listening to it get data we get from our server
        
         extractedData.forEach((prodId, prodData) {
-          loadedProduct.add(Product(
+          loadedProduct.insert( 0,
+            Product(
             id: prodId,
             title: prodData['title'],
             description: prodData['description'],
@@ -101,7 +102,7 @@ class Products with ChangeNotifier {
     Future<void>addProducts(Product product) async { //async methods automatically returns a future
 
       //----------------------saving data to our online database--------------------------//
-
+      print(product.isFavourite);
       //url of our firebase application server where we are going to save the data
       final url ="${secret.fireBaseUrl}/products.json";
       
@@ -125,6 +126,7 @@ class Products with ChangeNotifier {
           'price':product.price,
           'isFavourite':product.isFavourite
        })
+        
       );
       //----------------------saving data to our online database--------------------------//
       

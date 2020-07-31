@@ -1,6 +1,9 @@
 //this will be model following which we will create our products
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; //to convert data into json
+import '../secrets.dart';
 
 class Product with ChangeNotifier {
   final String id;
@@ -21,9 +24,38 @@ class Product with ChangeNotifier {
                  //the decorator @required rather just initialize with some default values
     });
 
-    void toggleFavouriteStatus(){
-      isFavourite = !isFavourite;
+    var secrets = Secrets();
+    
+    //function that help to roll back previous favourite values in case of an error
+    void _setFavValue(bool newValue){
+      isFavourite = newValue;
       notifyListeners();
+    }
+
+    Future<void> toggleFavouriteStatus() async {
+
+      var oldStatus = isFavourite; //this var is used to start the inital value of favourite before change
+      isFavourite = !isFavourite;  //toggling the value of isFavourite from true to false and vice versa
+      notifyListeners(); //notifying all its listners
+
+      final url = "${secrets.fireBaseUrl}/products/$id.json";
+
+      try {
+             final response = await http.patch(
+                url, 
+                body: json.encode({
+                    'isFavourite':isFavourite,
+                 }
+             ));
+             
+             if(response.statusCode >= 400){
+                 _setFavValue(oldStatus);
+             }
+      }
+      catch(err){
+        _setFavValue(oldStatus);
+      }
+
     }
   
 }

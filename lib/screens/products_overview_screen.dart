@@ -37,6 +37,34 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
           _isLoading = false;
         });
         
+      }).catchError((err){
+        setState(() {
+          _isLoading = false;
+        });
+        showDialog<Null>( //added await here to wait for the user to close this dialog then proceed for finally if erro happen 
+            context: context, 
+            builder: (ctx)=> Container(
+              child: AlertDialog(
+                title: Text("Error fetching the data"),
+                content: Container(
+                  height: MediaQuery.of(context).size.height/4,
+                  child: Column(children: <Widget>[
+                      Text("No Products found"),
+                      SizedBox(height: 10,),
+                      Image.asset("assets/images/sad_dog.png",height: 100,width: 100,)
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text("Okay"),
+                    onPressed: (){
+                    Navigator.of(ctx).pop();
+                   })
+                ],
+              ),
+            )
+            );
       });
     }
     _isInit = false;
