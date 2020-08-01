@@ -1,8 +1,9 @@
 //widget class to create our splashScreen
 
 import 'package:flutter/material.dart';
+import 'package:shop_app/screens/auth_screen.dart';
 import 'dart:async';
-import '../screens/products_overview_screen.dart';
+import '../screens/auth_screen.dart';
 
 class MySplashScreen extends StatefulWidget {
   @override
@@ -16,7 +17,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
     Timer(
       Duration(seconds: 3),
       () => Navigator.of(context)
-          .pushReplacementNamed(ProductOverviewScreen.routeName),
+          .pushReplacementNamed(AuthScreen.routeName),
     );
   }
 

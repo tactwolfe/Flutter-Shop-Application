@@ -11,6 +11,8 @@ import './screens/cart_screen.dart';
 import './screens/orders_screen.dart';
 import './screens/user_products_screen.dart';
 import './screens/edit_product_screen.dart';
+import './screens/auth_screen.dart';
+import './providers/auth_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -36,7 +38,11 @@ class MyApp extends StatelessWidget {
 
       ChangeNotifierProvider(
         create: (_)=> Orders(),//create/builder method that return new instance of our order provided class
-        )
+      ),
+
+      ChangeNotifierProvider(
+        create: (_)=> Auth(),//create/builder method that return new instance of our Auth provided class
+      )
     ],
       child: MaterialApp(
           title: "Shop App",
@@ -52,6 +58,7 @@ class MyApp extends StatelessWidget {
             OrdersScreen.routeName: (ctx)=> OrdersScreen(),
             UserProductScreen.routeName: (ctx)=> UserProductScreen(),
             EditProductScreen.routeName: (ctx)=>EditProductScreen(),
+            AuthScreen.routeName: (ctx)=>AuthScreen(),
           }),
     );
   }
