@@ -55,6 +55,15 @@ class Auth with ChangeNotifier{
       _autoLogout();  //thir here will automatically call logout after some time
       notifyListeners();
 
+      final prefs = await SharedPreferences.getInstance();
+      final userData = json.encode({ 
+        'token':_token ,
+        'userId':_userId ,
+        'expiryDate':_expiryDate.toIso8601String()
+        });
+
+      prefs.setString('userData', userData);
+
 
    }catch(error){
      throw error;
@@ -93,7 +102,7 @@ class Auth with ChangeNotifier{
   }
 
   //method to log out
-  void logout(){
+  Future<void> logout() async{
     _token = null;
     _userId = null;
     _expiryDate = null;
@@ -102,8 +111,14 @@ class Auth with ChangeNotifier{
       _authTimer = null;
     }
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    
+    // prefs.remove("userData"); //use this method if we are storing many information in our shared preferances and only want to remove a particluar data from it
+
+    prefs.clear(); //here we use this because we are only storing our user data in sharedpreferances thus when we logout we want to delete it so that auto login dont kicked in & logged us in
   }
 
+  //method to auto logout
   void _autoLogout(){
 
      if(_authTimer != null) {
@@ -117,4 +132,24 @@ class Auth with ChangeNotifier{
     );
   }
 
+  //method to auto login
+  Future<bool> tryAutoLogin () async {
+    final prefs = await SharedPreferences.getInstance();
+    if(!prefs.containsKey('userData')) {
+      return false;
+    }
+    final extractedUserData = json.decode(prefs.getString("userData")) as Map<String , Object>;
+    final expiryDate = DateTime.parse(extractedUserData['expiryDate']);
+
+    if(expiryDate.isBefore(DateTime.now())) {
+      return false;
+    }
+
+    _token = extractedUserData['token'];
+    _userId = extractedUserData['userId'];
+    _expiryDate = expiryDate;
+    notifyListeners();
+    _autoLogout();
+    return true;
+  }
 }
