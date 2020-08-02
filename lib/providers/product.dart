@@ -32,20 +32,26 @@ class Product with ChangeNotifier {
       notifyListeners();
     }
 
-    Future<void> toggleFavouriteStatus() async {
+    Future<void> toggleFavouriteStatus(String token , String userId) async {
 
       var oldStatus = isFavourite; //this var is used to start the inital value of favourite before change
       isFavourite = !isFavourite;  //toggling the value of isFavourite from true to false and vice versa
       notifyListeners(); //notifying all its listners
 
-      final url = "${secrets.fireBaseUrl}/products/$id.json";
+      final url = "${secrets.fireBaseUrl}/userFavorites/$userId/$id.json?auth=$token";
 
       try {
-             final response = await http.patch(
+            //  final response = await http.patch(
+            //     url, 
+            //     body: json.encode({
+            //         'isFavourite':isFavourite,
+            //      }
+            //  ));
+
+             final response = await http.put(
                 url, 
-                body: json.encode({
-                    'isFavourite':isFavourite,
-                 }
+                body: json.encode(
+                  isFavourite,
              ));
              
              if(response.statusCode >= 400){

@@ -52,11 +52,19 @@ class Products with ChangeNotifier {
     // ),
   ];
 
+
+
     //getter which will return all the products
     List<Product> get items {
    
       return [..._items];
     }
+
+    
+    final String authtoken;
+    final String userId;
+
+    Products(this.authtoken,this.userId,this._items);
 
     //this getter will return only the products which have isFavourite true
     List<Product> get favouriteItems{
@@ -70,11 +78,24 @@ class Products with ChangeNotifier {
     }
 
     //method to fetch product to be render on our product overview screen
-    Future<void>fetchAndSetProducts() async {
-      final url ="${secret.fireBaseUrl}/products.json";
+    Future<void>fetchAndSetProducts([ bool filterByUser = false ]) async { //added this boolean argument with a default and wrap it into square bracket to make it optional positional argument value to turn on and off the filtering logic
+
+      final filterString  = filterByUser ? 'orderBy="creatorId"&equalTo="$userId"' : '';
+
+      //fetched data for a specific authorized user
+      var url ='${secret.fireBaseUrl}/products.json?auth=$authtoken&$filterString';  
+     
       try{
         final response = await http.get(url); //http get method
         final extractedData = json.decode(response.body) as Map<String,dynamic>; //store the response we get as a map
+        if(extractedData == null){
+          return;
+        }
+
+        url = "${secret.fireBaseUrl}/userFavorites/$userId.json?auth=$authtoken";
+        final favoriteResponse = await http.get(url);
+        final favoriteData = json.decode(favoriteResponse.body);
+       
         final List<Product>loadedProduct = []; //created an empty list which will be assigned to our _items so item list will update and everyone listening to it get data we get from our server
        
         extractedData.forEach((prodId, prodData) {
@@ -85,7 +106,7 @@ class Products with ChangeNotifier {
             description: prodData['description'],
             price: prodData['price'],
             imageUrl: prodData['imageUrl'],
-            isFavourite: prodData['isisFavourite'],
+            isFavourite:  favoriteData == null ? false :  favoriteData[prodId] ?? false,
           ));
          });
           _items = loadedProduct; //assign our dummy list to ur main list of products
@@ -104,7 +125,7 @@ class Products with ChangeNotifier {
       //----------------------saving data to our online database--------------------------//
       print(product.isFavourite);
       //url of our firebase application server where we are going to save the data
-      final url ="${secret.fireBaseUrl}/products.json";
+      final url ="${secret.fireBaseUrl}/products.json?auth=$authtoken";
       
       //post method to save the data recieve in our database we send the data as map because json.encode accept data that way
       //note:this post method returns a future object thus we can use then method just after this
@@ -124,7 +145,8 @@ class Products with ChangeNotifier {
           'description':product.description,                     //return keyword
           'imageUrl':product.imageUrl,
           'price':product.price,
-          'isFavourite':product.isFavourite
+          'creatorId': userId
+          // 'isFavourite':product.isFavourite not sending this because we are managing fav in another collection
        })
         
       );
@@ -162,7 +184,7 @@ class Products with ChangeNotifier {
 
         //-------------------------update the product in database-----------------------------//
 
-        final url ="${secret.fireBaseUrl}/products/$id.json"; //modified url with id of product
+        final url ="${secret.fireBaseUrl}/products/$id.json?auth=$authtoken"; //modified url with id of product
                                                               //store in database to update it
                                                               //ps product id locally and online is same
         
@@ -190,7 +212,7 @@ class Products with ChangeNotifier {
 
       //----------------------deleting product from database----------------------------------//
 
-      final url ="${secret.fireBaseUrl}/products/$id.json";
+      final url ="${secret.fireBaseUrl}/products/$id.json?auth=$authtoken";
 
       //store the index of the product we are trying to delete
       final existingProductIndex = _items.indexWhere((prod) => prod.id == id);

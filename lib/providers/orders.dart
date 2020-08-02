@@ -23,17 +23,25 @@ class OrderItem {
 
 class Orders with ChangeNotifier{
 
-  List<OrderItem> _orders =[];
+  List<OrderItem> _orders = [];
+
+  final String authToken;
+  final String userId;
+
+  Orders( this.authToken,this.userId,this._orders) ;
+
 
   List<OrderItem> get orders {
     return [..._orders];
   }
 
+  
+
   final secrets = Secrets();
 
   Future<void> addOrder( List<CartItems> cartProducts , double total) async {
 
-    final url = "${secrets.fireBaseUrl}/orders.json";
+    final url = "${secrets.fireBaseUrl}/orders/$userId.json?auth=$authToken";
     final timestamp = DateTime.now(); //to store a timestamp and used it to create order both locally and in database with exactly the same time stamp because http request take some time thus the database versiona and local version datestamp might have varied
 
       final response = await http.post(url,body: json.encode({
@@ -64,7 +72,7 @@ class Orders with ChangeNotifier{
   }
 
   Future<void>fetchAndSetOrders() async {
-    final url = "${secrets.fireBaseUrl}/orders.json";
+    final url = "${secrets.fireBaseUrl}/orders/$userId.json?auth=$authToken";
     final response = await http.get(url);
     final List<OrderItem> loadedOrders = [];
     final extractedData = json.decode(response.body) as Map <String,dynamic>;

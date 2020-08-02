@@ -1,17 +1,15 @@
-//widget class to create our splashScreen
-
 import 'package:flutter/material.dart';
+import '../screens/products_overview_screen.dart';
 import 'dart:async';
-import '../screens/auth_screen.dart';
 
 
-class MySplashScreen extends StatefulWidget {
-
+class MySplashScreen2 extends StatefulWidget {
   @override
-  _MySplashScreenState createState() => _MySplashScreenState();
+  _MySplashScreen2State createState() => _MySplashScreen2State();
 }
 
-class _MySplashScreenState extends State<MySplashScreen> {
+class _MySplashScreen2State extends State<MySplashScreen2> {
+
   @override
   // void initState() {
 
@@ -20,25 +18,23 @@ class _MySplashScreenState extends State<MySplashScreen> {
   //   Timer(
   //     Duration(seconds: 3),
   //     () => Navigator.of(context)
-  //         .pushReplacementNamed(AuthScreen.routeName),
+  //         .pushReplacementNamed(ProductOverviewScreen.routeName),
   //   );
   // }
-
-  @override
   void didChangeDependencies() {
-    
+
     super.didChangeDependencies();
-    Timer(
+      Timer(
       Duration(seconds: 3),
       () => Navigator.of(context)
-          .pushReplacementNamed(AuthScreen.routeName),
-    );
+          .pushReplacementNamed(ProductOverviewScreen.routeName));
   }
+
 
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: <Widget>[
@@ -62,5 +58,6 @@ class _MySplashScreenState extends State<MySplashScreen> {
         ],
       ),
     );
+  
   }
 }

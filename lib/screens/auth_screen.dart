@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/screens/products_overview_screen.dart';
 import '../providers/auth_provider.dart';
+import '../model/http_exceptions.dart';
 
 enum AuthMode { Signup, Login } //this enum is used to switch between two auth mode i.e login & signup
 
@@ -93,6 +95,7 @@ class AuthCard extends StatefulWidget {
 }
 
 class _AuthCardState extends State<AuthCard> {
+
   final GlobalKey<FormState> _formKey = GlobalKey();
   AuthMode _authMode = AuthMode.Login;
   Map<String, String> _authData = {
@@ -101,6 +104,25 @@ class _AuthCardState extends State<AuthCard> {
   };
   var _isLoading = false;
   final _passwordController = TextEditingController();
+
+  //method to show a dialog to the user incase an error had occured during authentication
+  void _showErrorDialog(String message){
+    showDialog(
+      context: context,
+      builder: (ctx)=> AlertDialog(
+        title: Text("An error occured!"),
+        content: Text(message),
+        actions: <Widget>[
+          FlatButton(
+            child: Text("Okay"),
+            onPressed: (){
+              Navigator.of(ctx).pop();
+            }, 
+            )
+        ],
+      )
+      );
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState.validate()) {
@@ -111,19 +133,53 @@ class _AuthCardState extends State<AuthCard> {
     setState(() {
       _isLoading = true;
     });
-    if (_authMode == AuthMode.Login) {
-      // Log user in
-      await Provider.of<Auth>(context,listen: false).login(
-        _authData["email"], 
-        _authData["password"]
+
+    try {  
+      if (_authMode == AuthMode.Login) {
+        // Log user in
+        await Provider.of<Auth>(context,listen: false).login(
+          _authData["email"], 
+          _authData["password"]
+          );
+      } else {
+        // Sign user up by using provider to call signup method in auth provider and forward email and password
+        await Provider.of<Auth>(context,listen: false).signup(
+          _authData['email'],
+          _authData['password']
         );
-    } else {
-      // Sign user up by using provider to call signup method in auth provider and forward email and password
-      await Provider.of<Auth>(context,listen: false).signup(
-        _authData['email'],
-        _authData['password']
-      );
+      }
     }
+    on HttpExceptions catch(error) { //a special type of error catching function that catch a specific type of error
+
+      var errorMessage = "Authentication failed"; //default error message
+
+      //----------------------------more customed error message----------------------------------//
+      
+      if(error.toString().contains("EMAIL_EXISTS")){
+        errorMessage = "This email address is already in use";
+      }
+      else if(error.toString().contains("INVALID_EMAIL")){
+        errorMessage = "this is not a valid email address";
+      }
+      else if(error.toString().contains("WEAK_PASSWORD")){
+        errorMessage = "This password is to weak";
+      }
+      else if(error.toString().contains("EMAIL_NOT_FOUND")){
+        errorMessage = "Could not find a user with that email";
+      }
+      else if(error.toString().contains("INVALID_PASSWORD")){
+        errorMessage = "Invalid Password";
+      }
+
+      _showErrorDialog(errorMessage);
+
+       //----------------------------more customed error message----------------------------------//
+    }
+    catch(error){ //this catch method execute if there was no httpexception error happend that we had defined
+      const errorMessage = "Could not authenticate you right now. please try again later";
+      _showErrorDialog(errorMessage);
+    }
+
     setState(() {
       _isLoading = false;
     });
@@ -197,6 +253,7 @@ class _AuthCardState extends State<AuthCard> {
                             if (value != _passwordController.text) {
                               return 'Passwords do not match!';
                             }
+                            return null;
                           }
                         : null,
                   ),

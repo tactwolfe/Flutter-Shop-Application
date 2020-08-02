@@ -3,6 +3,7 @@ import 'package:provider/provider.dart'; //to register our provider
 import 'package:shop_app/providers/orders.dart';
 
 import './screens/splashScreen.dart';
+import 'screens/splashScreen_2.dart';
 import './screens/products_overview_screen.dart';
 import './screens/product_detail_screen.dart';
 import './providers/products_provider.dart'; //link to our provider class
@@ -27,30 +28,55 @@ class MyApp extends StatelessWidget {
     //we use this MultiProvier if we want to pass more than one provider to same root widget
     return MultiProvider(providers:[
 
+       ChangeNotifierProvider(
+        create: (_)=> Auth(),//create/builder method that return new instance of our Auth provided class
+      ),
+
       //this syntax is used when we try to create a new object for the provided class
-      ChangeNotifierProvider(
-      create: (ctx) => Products(), //create/builder method that return new instance of our Products provided class
+      ChangeNotifierProxyProvider< Auth , Products >(
+      create: (_) => Products(null,null, []),
+      update: (ctx,auth,previousProducts) => 
+      Products(
+        auth.token,
+        auth.userId,
+        previousProducts.items == null ? [] : previousProducts.items 
+        ), //create/builder method that return new instance of our Products provided class
       ),
 
       ChangeNotifierProvider(
         create: (_)=> Cart(), //create/builder method that return new instance of our cart provided class
       ),
 
-      ChangeNotifierProvider(
-        create: (_)=> Orders(),//create/builder method that return new instance of our order provided class
+      ChangeNotifierProxyProvider<Auth , Orders>(
+        create: (_)=> Orders(null,null,[]),
+        //create/builder method that return new instance of our order provided class
+        update: (ctx , auth , previousOrder) =>
+        Orders(
+          auth.token,
+          auth.userId,
+          previousOrder.orders == null ? [] : previousOrder.orders
+        ), 
+        
       ),
 
-      ChangeNotifierProvider(
-        create: (_)=> Auth(),//create/builder method that return new instance of our Auth provided class
-      )
+     
     ],
-      child: MaterialApp(
+      child:
+       Consumer<Auth>(
+      builder:(ctx, auth, _) => 
+       MaterialApp(
           title: "Shop App",
           theme: ThemeData(
               primarySwatch: Colors.deepOrange,
               accentColor: Colors.deepOrangeAccent,
               fontFamily: 'Lato'),
-          home: MySplashScreen(),
+          home: 
+          auth.isAuth ? ProductOverviewScreen() :
+           AuthScreen(),
+          // auth.isAuth ? MySplashScreen2() 
+          // : MySplashScreen(),
+          //  auth.isAuth ? ProductOverviewScreen() 
+          // : MySplashScreen(),
           routes: {
             ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
             ProductOverviewScreen.routeName: (ctx) => ProductOverviewScreen(),
@@ -60,6 +86,7 @@ class MyApp extends StatelessWidget {
             EditProductScreen.routeName: (ctx)=>EditProductScreen(),
             AuthScreen.routeName: (ctx)=>AuthScreen(),
           }),
+      )
     );
   }
 }
