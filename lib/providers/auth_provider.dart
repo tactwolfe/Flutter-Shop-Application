@@ -1,9 +1,13 @@
 //authentication provider class
 
+import 'dart:async';
 import 'package:flutter/material.dart';
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+
+
 import '../secrets.dart';
 import '../model/http_exceptions.dart'; //my own exception model
 
@@ -12,6 +16,7 @@ class Auth with ChangeNotifier{
   String _token;
   DateTime _expiryDate;
   String _userId;
+  Timer _authTimer;
 
   final secrets = Secrets();
 
@@ -47,7 +52,9 @@ class Auth with ChangeNotifier{
           ),
         ),
       );
+      _autoLogout();  //thir here will automatically call logout after some time
       notifyListeners();
+
 
    }catch(error){
      throw error;
@@ -83,6 +90,31 @@ class Auth with ChangeNotifier{
   //getter to get user id
   String get userId{
     return _userId;
+  }
+
+  //method to log out
+  void logout(){
+    _token = null;
+    _userId = null;
+    _expiryDate = null;
+    if(_authTimer!= null){
+      _authTimer.cancel();
+      _authTimer = null;
+    }
+    notifyListeners();
+  }
+
+  void _autoLogout(){
+
+     if(_authTimer != null) {
+       _authTimer.cancel();
+     } 
+
+    var timeToExpiry =_expiryDate.difference(DateTime.now()).inSeconds;
+     _authTimer = Timer(
+      Duration(seconds: timeToExpiry), //time remain for expiration of token
+      logout  //if token expire call the method logout
+    );
   }
 
 }
