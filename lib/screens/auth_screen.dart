@@ -105,21 +105,21 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
   var _isLoading = false;
   final _passwordController = TextEditingController();
   
-  AnimationController _controller;
-  Animation<Size>_heightAnimation;
+  AnimationController _controller; //animation controller
+  Animation<Size>_heightAnimation; //the type of animation we want here hight animation only
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     _heightAnimation = Tween<Size>(
-      begin: Size(double.infinity, 260), 
-      end: Size(double.infinity, 320)
+      begin: Size(double.infinity, 260), //container min height during animation
+      end: Size(double.infinity, 320) //container max height during animation
       ).animate(
         CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn));
-        _heightAnimation.addListener(
-          ()=> setState((){})
-        );
+        // _heightAnimation.addListener(
+        //   ()=> setState((){})
+        // );
   }
 
   @override
@@ -216,12 +216,12 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
       setState(() {
         _authMode = AuthMode.Signup;
       });
-      _controller.forward();
+      _controller.forward(); //to increase the height of our animated container to show confirm password
     } else {
       setState(() {
         _authMode = AuthMode.Login;
       });
-      _controller.reverse();
+      _controller.reverse();//to decrease the height of our animated container to show email and login only
     }
   }
 
@@ -233,14 +233,21 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
         borderRadius: BorderRadius.circular(10.0),
       ),
       elevation: 8.0,
-      child: Container(
+      child: AnimatedBuilder(
+
+        animation: _heightAnimation, //what animation we want to do
+        
+        builder: (ctx,ch)=>  //builder method
+         Container(
         // height: _authMode == AuthMode.Signup ? 320 : 260,
         height: _heightAnimation.value.height,
         constraints:
             BoxConstraints(minHeight: _heightAnimation.value.height),
         width: deviceSize.width * 0.75,
         padding: EdgeInsets.all(16.0),
-        child: Form(
+        child: ch ),
+
+        child:  Form( //child argument that is passed into the builder to remain constant and not rebuild since we dont want to animate this
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
@@ -317,8 +324,8 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
               ],
             ),
           ),
+        ) ,
         ),
-      ),
     );
   }
 }
