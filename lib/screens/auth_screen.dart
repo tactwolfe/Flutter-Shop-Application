@@ -106,17 +106,33 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
   final _passwordController = TextEditingController();
   
   AnimationController _controller; //animation controller
-  Animation<Size>_heightAnimation; //the type of animation we want here hight animation only
+  // Animation<Size>_heightAnimation; //the type of animation we want here hight animation only
+  Animation<double>_opacityAnimation; //animation to change opacity
+  Animation<Offset>_slideAnimation;
+  
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
-    _heightAnimation = Tween<Size>(
-      begin: Size(double.infinity, 260), //container min height during animation
-      end: Size(double.infinity, 320) //container max height during animation
-      ).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn));
+    // _heightAnimation = Tween<Size>(
+    //   begin: Size(double.infinity, 260), //container min height during animation
+    //   end: Size(double.infinity, 320) //container max height during animation
+    //   ).animate(
+    //     CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn)
+    //   );
+    _opacityAnimation = Tween
+    ( begin: 0.0 ,
+    end:1.0
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn)
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, -1.5),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn)
+    );
         // _heightAnimation.addListener(
         //   ()=> setState((){})
         // );
@@ -216,12 +232,12 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
       setState(() {
         _authMode = AuthMode.Signup;
       });
-      _controller.forward(); //to increase the height of our animated container to show confirm password
+      _controller.forward(); //to start the animation forward from beigning to end
     } else {
       setState(() {
         _authMode = AuthMode.Login;
       });
-      _controller.reverse();//to decrease the height of our animated container to show email and login only
+      _controller.reverse();//to reverse the animation
     }
   }
 
@@ -274,20 +290,35 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
                     _authData['password'] = value;
                   },
                 ),
-                if (_authMode == AuthMode.Signup)
-                  TextFormField(
-                    enabled: _authMode == AuthMode.Signup,
-                    decoration: InputDecoration(labelText: 'Confirm Password'),
-                    obscureText: true, //to hide password and show star markings
-                    validator: _authMode == AuthMode.Signup
-                        ? (value) {
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match!';
-                            }
-                            return null;
-                          }
-                        : null,
+                // if (_authMode == AuthMode.Signup)
+                      AnimatedContainer(
+                        constraints: BoxConstraints(
+                          minHeight: _authMode == AuthMode.Signup? 60 : 0,
+                          maxHeight: _authMode == AuthMode.Signup ? 120 : 0,
+                          ),
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeIn,
+          
+                        child: FadeTransition( //we wrap fadetransition inside animated container because even though this field is not visible it always take the height to render this formtext fiel so in our login mode we get an ugly scrolling effect to avaoid this we use this 
+                        opacity: _opacityAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: TextFormField(
+                          enabled: _authMode == AuthMode.Signup,
+                          decoration: InputDecoration(labelText: 'Confirm Password'),
+                          obscureText: true, //to hide password and show star markings
+                          validator: _authMode == AuthMode.Signup
+                              ? (value) {
+                                  if (value != _passwordController.text) {
+                                    return 'Passwords do not match!';
+                                  }
+                                  return null;
+                                }
+                              : null,
+                    ),
+                        ),
                   ),
+                      ),
                 SizedBox(
                   height: 20,
                 ),
