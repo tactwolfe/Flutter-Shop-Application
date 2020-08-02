@@ -233,20 +233,15 @@ class _AuthCardState extends State<AuthCard> with SingleTickerProviderStateMixin
         borderRadius: BorderRadius.circular(10.0),
       ),
       elevation: 8.0,
-      child: AnimatedBuilder(
-
-        animation: _heightAnimation, //what animation we want to do
-        
-        builder: (ctx,ch)=>  //builder method
-         Container(
-        // height: _authMode == AuthMode.Signup ? 320 : 260,
-        height: _heightAnimation.value.height,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300), //duration of animation
+        curve: Curves.easeIn, //what kind of curve animation we want
+        height: _authMode == AuthMode.Signup ? 320 : 260,
+        // height: _heightAnimation.value.height,
         constraints:
-            BoxConstraints(minHeight: _heightAnimation.value.height),
+            BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260,),
         width: deviceSize.width * 0.75,
         padding: EdgeInsets.all(16.0),
-        child: ch ),
-
         child:  Form( //child argument that is passed into the builder to remain constant and not rebuild since we dont want to animate this
           key: _formKey,
           child: SingleChildScrollView(
