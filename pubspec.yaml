@@ -56,6 +56,7 @@ flutter:
     - assets/images/shop_logo.gif
     - assets/images/error.png
     - assets/images/sad_dog.png
+    - assets/images/product-placeholder.png
 
   #   - images/a_dot_ham.jpeg
 
