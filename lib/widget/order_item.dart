@@ -36,10 +36,12 @@ class _OrderItemState extends State<OrderItem> {
                }
                ),
           ),
-          if(_expanded) 
-          Container(
+          
+          AnimatedContainer(
+            duration: Duration(milliseconds: 400),
+            curve: Curves.easeIn,
             padding: EdgeInsets.symmetric(horizontal: 15,vertical: 4),
-            height: min(widget.order.products.length * 20.0 + 50.0 , 120.0 ),
+            height:  _expanded ? min(widget.order.products.length * 20.0 + 50.0 , 120.0 ) : 0,
             child: ListView.builder(
               itemCount: widget.order.products.length  ,
               itemBuilder: (ctx,index)=> 

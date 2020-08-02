@@ -38,7 +38,6 @@ class ProductDetailScreen extends StatelessWidget {
                 style:TextStyle(
                   backgroundColor: Colors.black54
                   ),
-                  textAlign: TextAlign.right,
                 ),
               background: Hero(
                 tag: loadedProduct.id,
